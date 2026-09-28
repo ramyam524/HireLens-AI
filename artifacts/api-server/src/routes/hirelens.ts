@@ -16,6 +16,9 @@ import {
   SubmitInterviewAnswerResponse,
 } from "@workspace/api-zod";
 
+// HireLens runs in self-contained demo mode. Questions, analysis, and feedback
+// are app-owned mock responses so the product never requires an AI provider key.
+
 type Question = {
   id: string;
   prompt: string;

@@ -1,0 +1,29 @@
+{
+  "Java": [
+    "How would you design a thread-safe cache in Java?",
+    "What happens inside the JVM when a class is loaded?",
+    "How would you diagnose a slow Spring Boot endpoint in production?",
+    "Explain the difference between composition and inheritance.",
+    "Tell me about a time you made a Java system more reliable.",
+    "When would you use CompletableFuture instead of a blocking call?",
+    "How do you approach testing a service with external dependencies?"
+  ],
+  "Python": [
+    "How would you structure a Python service that processes a large queue?",
+    "Explain Python's GIL and when it matters.",
+    "How would you make a FastAPI endpoint observable in production?",
+    "When would you choose a generator over a list?",
+    "Tell me about a Python project you are proud of.",
+    "How do you keep a Python codebase maintainable as it grows?",
+    "What would you optimize first in a slow Python data pipeline?"
+  ],
+  "HR": [
+    "Tell me about a time you influenced a decision without authority.",
+    "How do you handle disagreement with a teammate?",
+    "What is a piece of feedback that changed how you work?",
+    "Tell me about a project that did not go to plan.",
+    "What kind of team environment helps you do your best work?",
+    "Tell me about a time you had to prioritize competing deadlines.",
+    "How do you build trust with a new team?"
+  ]
+}

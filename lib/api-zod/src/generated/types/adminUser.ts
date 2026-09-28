@@ -6,6 +6,12 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
+export interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  plan: string;
+  interviews: number;
+  joinedAt: string;
   status: string;
 }

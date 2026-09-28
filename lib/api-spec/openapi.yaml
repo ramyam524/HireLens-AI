@@ -1,22 +1,23 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: HireLens AI API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
-    description: Health operations
+  - name: dashboard
+  - name: interviews
+  - name: resume
+  - name: admin
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
-      summary: Health check
-      description: Returns server health status
+      summary: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +25,312 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard summary
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+  /interviews:
+    get:
+      operationId: listInterviews
+      tags: [interviews]
+      summary: List the current user's interviews
+      responses:
+        "200":
+          description: Interview history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Interview"
+    post:
+      operationId: createInterview
+      tags: [interviews]
+      summary: Start an interview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InterviewInput"
+      responses:
+        "201":
+          description: Interview session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Interview"
+  /interviews/{id}:
+    get:
+      operationId: getInterview
+      tags: [interviews]
+      summary: Get an interview
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Interview details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Interview"
+        "404":
+          description: Interview not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /interviews/{id}/answers:
+    post:
+      operationId: submitInterviewAnswer
+      tags: [interviews]
+      summary: Submit an answer and receive feedback
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnswerInput"
+      responses:
+        "200":
+          description: Answer feedback
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnswerFeedback"
+  /resume/analyze:
+    post:
+      operationId: analyzeResume
+      tags: [resume]
+      summary: Analyze resume content
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResumeAnalysisInput"
+      responses:
+        "200":
+          description: Resume analysis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResumeAnalysis"
+  /admin/users:
+    get:
+      operationId: listAdminUsers
+      tags: [admin]
+      summary: List users for admin
+      responses:
+        "200":
+          description: Users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminUser"
+  /admin/interviews:
+    get:
+      operationId: listAdminInterviews
+      tags: [admin]
+      summary: List interviews for admin
+      responses:
+        "200":
+          description: Interviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Interview"
 components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
   schemas:
     HealthStatus:
       type: object
       properties:
         status:
           type: string
-      required:
-        - status
-
+      required: [status]
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+    InterviewInput:
+      type: object
+      properties:
+        role:
+          type: string
+        difficulty:
+          type: string
+          enum: [Easy, Medium, Hard]
+        type:
+          type: string
+          enum: [Technical, HR]
+      required: [role, difficulty, type]
+    InterviewQuestion:
+      type: object
+      properties:
+        id:
+          type: string
+        prompt:
+          type: string
+        category:
+          type: string
+        answered:
+          type: boolean
+      required: [id, prompt, category, answered]
+    Interview:
+      type: object
+      properties:
+        id:
+          type: string
+        role:
+          type: string
+        difficulty:
+          type: string
+        type:
+          type: string
+        status:
+          type: string
+          enum: [in_progress, completed]
+        score:
+          type: ["number", "null"]
+        questionCount:
+          type: integer
+        completedAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        questions:
+          type: array
+          items:
+            $ref: "#/components/schemas/InterviewQuestion"
+      required: [id, role, difficulty, type, status, score, questionCount, completedAt, createdAt, questions]
+    AnswerInput:
+      type: object
+      properties:
+        questionId:
+          type: string
+        answer:
+          type: string
+      required: [questionId, answer]
+    AnswerFeedback:
+      type: object
+      properties:
+        score:
+          type: number
+        good:
+          type: array
+          items:
+            type: string
+        improve:
+          type: array
+          items:
+            type: string
+        betterAnswer:
+          type: string
+        nextQuestion:
+          type: ["string", "null"]
+        completed:
+          type: boolean
+      required: [score, good, improve, betterAnswer, nextQuestion, completed]
+    DashboardSummary:
+      type: object
+      properties:
+        interviewsTaken:
+          type: integer
+        averageScore:
+          type: number
+        practiceMinutes:
+          type: integer
+        improvement:
+          type: number
+        weakAreas:
+          type: array
+          items:
+            $ref: "#/components/schemas/WeakArea"
+        recentInterviews:
+          type: array
+          items:
+            $ref: "#/components/schemas/Interview"
+      required: [interviewsTaken, averageScore, practiceMinutes, improvement, weakAreas, recentInterviews]
+    WeakArea:
+      type: object
+      properties:
+        subject:
+          type: string
+        score:
+          type: number
+        fullMark:
+          type: number
+      required: [subject, score, fullMark]
+    ResumeAnalysisInput:
+      type: object
+      properties:
+        filename:
+          type: string
+        text:
+          type: string
+      required: [filename, text]
+    ResumeAnalysis:
+      type: object
+      properties:
+        id:
+          type: string
+        filename:
+          type: string
+        atsScore:
+          type: number
+        summary:
+          type: string
+        missingSkills:
+          type: array
+          items:
+            type: string
+        strengths:
+          type: array
+          items:
+            type: string
+        questions:
+          type: array
+          items:
+            type: string
+      required: [id, filename, atsScore, summary, missingSkills, strengths, questions]
+    AdminUser:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        plan:
+          type: string
+        interviews:
+          type: integer
+        joinedAt:
+          type: string
+        status:
+          type: string
+      required: [id, name, email, plan, interviews, joinedAt, status]

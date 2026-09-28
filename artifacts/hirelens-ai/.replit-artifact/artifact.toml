@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "HireLens AI"
+description = "A premium AI mock interview platform that helps candidates practice role-specific interviews, get instant feedback, analyze resumes, and track their progress."
+version = "1.0.0"
+id = "artifacts/hirelens-ai"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22752
+
+[services.development]
+run = "pnpm --filter @workspace/hirelens-ai run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/hirelens-ai", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/hirelens-ai/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22752"
+BASE_PATH = "/"

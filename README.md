@@ -1,18 +1,33 @@
-# HireLens-AI - AI Hiring Platform
+# HireLens-AI 🚀
+### AI-Powered Smart Hiring Platform
 
-AI-powered hiring platform with resume analysis, ATS scoring & fraud detection.
+> Revolutionizing recruitment with AI - Screen resumes 10x faster, detect fraud, and hire bias-free.
 
-## Features
-- Resume Parser & ATS Score Checker
-- Role-based AI Interview Questions Generator
-- Bias-free Candidate Ranking System
-- Replit + TypeScript Monorepo
+🔗 **Live Demo:** [Click Here to View Project](https://your-replit-link.replit.app)
 
-## Tech Stack
-TypeScript, React, Tailwind, Zod, Node.js, pnpm
+---
 
-## How to Run
+### ✨ Key Features
+
+- 📄 **Smart Resume Parser** - Extract skills, experience & calculate ATS score instantly
+- 🛡️ **Fraud Detection** - AI detects fake resumes, inflated experience & inconsistencies
+- 🎯 **Bias-Free Ranking** - Fair candidate ranking without gender/caste/college bias
+- 💬 **AI Interview Generator** - Auto-generates role-specific interview questions
+- 📊 **Recruiter Dashboard** - Beautiful analytics & candidate comparison view
+
+---
+
+### 🛠️ Tech Stack
+
+**Frontend:** React, TypeScript, Tailwind CSS, Shadcn UI
+**Backend:** Node.js, Express
+**AI:** OpenAI API, NLP
+**Tools:** Replit, Git, GitHub
+
+---
+
+### 🚀 How to Run
+
+```bash
 pnpm install
 pnpm dev
-
-Made by Ramya M

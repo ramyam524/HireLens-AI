@@ -3,7 +3,8 @@
 
 > Revolutionizing recruitment with AI - Screen resumes 10x faster, detect fraud, and hire bias-free.
 
-🔗 **Live Demo:** [Click Here to View Project](https://your-replit-link.replit.app)
+🔗 **Live Demo:** [Click Here to View Project]
+🔗 **Live Demo:** [https://hire-lens-ai--h33133357.replit.app](https://hire-lens-ai--h33133357.replit.app)
 
 ---
 

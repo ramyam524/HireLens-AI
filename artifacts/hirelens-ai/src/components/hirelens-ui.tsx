@@ -74,8 +74,9 @@ export function StatCard({ label, value, note, accent = false, icon: Icon }: { l
 }
 
 export function ScoreRing({ score, label = 'overall score' }: { score: number; label?: string }) {
-  const dash = Math.max(0, Math.min(100, score)) * 2.51;
-  return <div className="score-ring" data-testid={`score-ring-${label.replaceAll(' ', '-')}`}><svg viewBox="0 0 100 100"><circle className="ring-bg" cx="50" cy="50" r="40" /><circle className="ring-progress" cx="50" cy="50" r="40" strokeDasharray={`${dash} 251`} /></svg><div><strong>{score}</strong><span>{label}</span></div></div>;
+  const displayScore = score <= 10 ? Math.round(score * 10) : Math.round(score);
+  const dash = Math.max(0, Math.min(100, displayScore)) * 2.51;
+  return <div className="score-ring" data-testid={`score-ring-${label.replaceAll(' ', '-')}`}><svg viewBox="0 0 100 100"><circle className="ring-bg" cx="50" cy="50" r="40" /><circle className="ring-progress" cx="50" cy="50" r="40" strokeDasharray={`${dash} 251`} /></svg><div><strong>{displayScore}</strong><span>{label}</span></div></div>;
 }
 
 export function EmptyState({ title, description, action }: { title: string; description: string; action?: ReactNode }) {
@@ -94,7 +95,8 @@ export function StatusPill({ children, tone = 'neutral' }: { children: ReactNode
 
 export function InterviewRow({ interview, onOpen }: { interview: any; onOpen?: () => void }) {
   const date = interview.completedAt || interview.createdAt;
-  return <button className="interview-row" onClick={onOpen} data-testid={`row-interview-${interview.id}`}><span className="row-date">{date ? new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}</span><span className="row-role"><strong>{interview.role}</strong><small>{interview.type} · {interview.difficulty}</small></span><span className="row-questions">{interview.questionCount} questions</span><StatusPill tone={interview.status === 'completed' ? 'good' : 'live'}>{interview.status === 'completed' ? 'Completed' : 'In progress'}</StatusPill><span className="row-score">{interview.score ?? '—'}{interview.score ? '/100' : ''}</span><ArrowRight size={16} className="row-arrow" /></button>;
+  const displayScore = typeof interview.score === 'number' ? (interview.score <= 10 ? Math.round(interview.score * 10) : Math.round(interview.score)) : null;
+  return <button className="interview-row" onClick={onOpen} data-testid={`row-interview-${interview.id}`}><span className="row-date">{date ? new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}</span><span className="row-role"><strong>{interview.role}</strong><small>{interview.type} · {interview.difficulty}</small></span><span className="row-questions">{interview.questionCount} questions</span><StatusPill tone={interview.status === 'completed' ? 'good' : 'live'}>{interview.status === 'completed' ? 'Completed' : 'In progress'}</StatusPill><span className="row-score">{displayScore ?? '—'}{displayScore !== null ? '/100' : ''}</span><ArrowRight size={16} className="row-arrow" /></button>;
 }
 
 export function SectionLabel({ children, action }: { children: ReactNode; action?: ReactNode }) {

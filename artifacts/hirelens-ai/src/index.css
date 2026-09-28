@@ -582,6 +582,7 @@ button { cursor: pointer; }
 .route-loading { min-height: 100dvh; display: grid; place-items: center; background: hsl(var(--background)); color: hsl(var(--muted-foreground)); font-family: var(--app-font-mono); font-size: 11px; text-transform: uppercase; }
 .chart-panel { margin-bottom: 14px; padding-bottom: 12px; }
 .chart-wrap { padding: 0 18px 4px; }
+.chart-caption { color: hsl(var(--muted-foreground)); font-family: var(--app-font-mono); font-size: 9px; text-transform: uppercase; }
 .landing-extras { padding: 105px 28px 95px; background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
 .landing-extra-inner { max-width: 1184px; margin: 0 auto; }
 .landing-extras .section-intro { margin-bottom: 38px; }

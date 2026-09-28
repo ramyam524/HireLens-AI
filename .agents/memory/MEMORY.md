@@ -1,0 +1,1 @@
+- [Demo-mode interview signal](demo-mode-interview-signal.md) — answer feedback and analytics persist locally until account-backed storage and hosted voice are enabled.

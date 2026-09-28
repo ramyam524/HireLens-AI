@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useParams } from 'wouter';
 import { useForm } from 'react-hook-form';
 import { ArrowLeft, ArrowRight, BarChart3, BookOpenCheck, BriefcaseBusiness, Check, CircleCheck, Clock3, Download, FileAudio, FileCheck2, FileSearch, Headphones, LoaderCircle, LockKeyhole, Mic, Pause, Play, Plus, RotateCcw, Search, Sparkles, Target, UploadCloud, UserRound, Volume2, X } from 'lucide-react';
@@ -6,7 +6,7 @@ import {
   getGetDashboardSummaryQueryKey, getGetInterviewQueryKey, getListAdminInterviewsQueryKey, getListAdminUsersQueryKey, getListInterviewsQueryKey,
   useAnalyzeResume, useCreateInterview, useGetDashboardSummary, useGetInterview, useListAdminInterviews, useListAdminUsers, useListInterviews, useSubmitInterviewAnswer,
 } from '@workspace/api-client-react';
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { AppShell, AuthFrame, Button, cx, EmptyState, InterviewRow, Logo, PageHeader, PublicNav, QueryState, ScoreRing, SectionLabel, StatCard, StatusPill } from '@/components/hirelens-ui';
 
 const fallbackSummary = { interviewsTaken: 12, averageScore: 78, practiceMinutes: 246, improvement: 18, weakAreas: [{ subject: 'Story structure', score: 52, fullMark: 100 }, { subject: 'Technical depth', score: 64, fullMark: 100 }, { subject: 'Conciseness', score: 71, fullMark: 100 }, { subject: 'Confidence', score: 83, fullMark: 100 }], recentInterviews: [] };
@@ -15,6 +15,22 @@ const fallbackInterviews = [
   { id: 'demo-2', role: 'Product Manager', difficulty: 'Hard', type: 'Technical', status: 'completed', score: 72, questionCount: 10, completedAt: new Date(Date.now() - 86400000 * 7).toISOString(), createdAt: new Date(Date.now() - 86400000 * 7).toISOString(), questions: [] },
   { id: 'demo-3', role: 'Design Lead', difficulty: 'Easy', type: 'HR', status: 'completed', score: 79, questionCount: 6, completedAt: new Date(Date.now() - 86400000 * 13).toISOString(), createdAt: new Date(Date.now() - 86400000 * 13).toISOString(), questions: [] },
 ];
+
+type StoredFeedback = { id: string; role: string; category: string; score: number; createdAt: string };
+const ANALYTICS_KEY = 'hirelens-demo-analytics';
+const normalizeScore = (score: number) => score <= 10 ? Math.round(score * 10) : Math.round(score);
+const readAnalytics = (): StoredFeedback[] => {
+  try {
+    const saved = JSON.parse(localStorage.getItem(ANALYTICS_KEY) || '[]');
+    return Array.isArray(saved) ? saved : [];
+  } catch {
+    return [];
+  }
+};
+const saveFeedback = (item: StoredFeedback) => {
+  const next = [...readAnalytics().filter(existing => existing.id !== item.id), item].slice(-30);
+  localStorage.setItem(ANALYTICS_KEY, JSON.stringify(next));
+};
 
 export function MarketingPage() {
   return <><LandingPage /><LandingExtras /></>;
@@ -47,10 +63,37 @@ export function DashboardPage() {
   const dashboard = useGetDashboardSummary({ query: { queryKey: getGetDashboardSummaryQueryKey() } });
   const interviews = useListInterviews({ query: { queryKey: getListInterviewsQueryKey() } });
   const [, setLocation] = useLocation();
+  const [savedResults, setSavedResults] = useState<StoredFeedback[]>([]);
+  useEffect(() => setSavedResults(readAnalytics()), []);
   const summary: any = dashboard.data || fallbackSummary;
   const list: any[] = (interviews.data?.length ? interviews.data : summary.recentInterviews?.length ? summary.recentInterviews : fallbackInterviews);
   const areas = summary.weakAreas?.length ? summary.weakAreas : fallbackSummary.weakAreas;
-  return <AppShell><PageHeader eyebrow="Monday, October 14" title="Good morning, Alex." description="A little practice today compounds quickly." action={<Link href="/interview/new" className="btn btn-dark" data-testid="link-dashboard-start"><Play size={15} /> Start practice</Link>} /><QueryState loading={dashboard.isLoading && !dashboard.data} error={dashboard.isError && !dashboard.data}><div className="stats-grid"><StatCard label="Interviews taken" value={summary.interviewsTaken} note="Keep the rhythm" icon={BookOpenCheck} /><StatCard label="Average score" value={`${summary.averageScore}%`} note={`${summary.improvement > 0 ? '+' : ''}${summary.improvement}% this month`} accent icon={BarChart3} /><StatCard label="Practice time" value={`${summary.practiceMinutes}m`} note="Across all sessions" icon={Clock3} /></div><section className="panel chart-panel"><SectionLabel>Signal by focus area</SectionLabel><div className="chart-wrap" data-testid="chart-weak-areas"><ResponsiveContainer width="100%" height={190}><BarChart data={areas} margin={{ top: 8, right: 18, left: -18, bottom: 0 }}><CartesianGrid vertical={false} stroke="hsl(42 22% 84%)" /><XAxis dataKey="subject" tickLine={false} axisLine={false} tick={{ fill: 'hsl(222 15% 45%)', fontSize: 10 }} /><YAxis domain={[0, 100]} tickLine={false} axisLine={false} tick={{ fill: 'hsl(222 15% 45%)', fontSize: 10 }} /><Tooltip cursor={{ fill: 'hsl(42 24% 90%)' }} contentStyle={{ borderRadius: 8, border: '1px solid hsl(42 22% 84%)', background: 'hsl(46 43% 98%)', fontSize: 11 }} /><Bar dataKey="score" fill="hsl(182 52% 44%)" radius={[4, 4, 0, 0]} /></BarChart></ResponsiveContainer></div></section><div className="dashboard-grid"><div className="dashboard-main"><section className="panel focus-panel animate-in"><div className="focus-copy"><span className="eyebrow">Your focus this week</span><h2>Turn story structure<br />into your strength.</h2><p>Your answers have good instincts. Give them a clearer beginning, middle, and result.</p><Link href="/interview/new" className="text-link" data-testid="link-focus-practice">Practice this area <ArrowRight size={15} /></Link></div><div className="focus-visual"><div className="focus-orbit orbit-one" /><div className="focus-orbit orbit-two" /><div className="focus-core">52<span>/100</span></div><span className="orbit-label">story<br />structure</span></div></section><section className="panel"><SectionLabel action={<Link href="/history" className="text-link" data-testid="link-dashboard-history">View all <ArrowRight size={14} /></Link>}>Recent practice</SectionLabel><div className="interview-list">{list.slice(0, 4).map((item: any) => <InterviewRow key={item.id} interview={item} onOpen={() => setLocation(`/interview/${item.id}`)} />)}</div></section></div><aside className="dashboard-aside"><section className="panel score-panel"><SectionLabel>Readiness signal</SectionLabel><ScoreRing score={summary.averageScore} label="average" /><div className="score-trend"><span><i className="trend-dot" /> +{summary.improvement}%</span><small>since your first session</small></div></section><section className="panel weak-panel"><SectionLabel action={<Link href="/interview/new" className="icon-link" data-testid="link-weak-practice"><ArrowRight size={15} /></Link>}>Weak areas</SectionLabel>{areas.slice(0, 4).map((area: any, index: number) => <div className="weak-row" key={area.subject}><span className="weak-index">0{index + 1}</span><div><strong>{area.subject}</strong><div className="progress-track"><span style={{ width: `${area.score}%` }} /></div></div><small>{area.score}</small></div>)}</section></aside></div></QueryState></AppShell>;
+  const trend = savedResults.length
+    ? savedResults.map((result, index) => ({ ...result, label: `#${index + 1}`, displayScore: normalizeScore(result.score) }))
+    : [{ label: 'Start', displayScore: 62 }, { label: 'Build', displayScore: 70 }, { label: 'Now', displayScore: 78 }];
+  const averageScore = normalizeScore(summary.averageScore);
+  return <AppShell>
+    <PageHeader eyebrow="Monday, October 14" title="Good morning, Alex." description="A little practice today compounds quickly." action={<Link href="/interview/new" className="btn btn-dark" data-testid="link-dashboard-start"><Play size={15} /> Start practice</Link>} />
+    <QueryState loading={dashboard.isLoading && !dashboard.data} error={dashboard.isError && !dashboard.data}>
+      <div className="stats-grid">
+        <StatCard label="Interviews taken" value={summary.interviewsTaken} note="Keep the rhythm" icon={BookOpenCheck} />
+        <StatCard label="Average score" value={`${averageScore}%`} note={`${summary.improvement > 0 ? '+' : ''}${summary.improvement}% this month`} accent icon={BarChart3} />
+        <StatCard label="Practice time" value={`${summary.practiceMinutes}m`} note="Across all sessions" icon={Clock3} />
+      </div>
+      <section className="panel chart-panel">
+        <SectionLabel>Signal by focus area</SectionLabel>
+        <div className="chart-wrap" data-testid="chart-weak-areas"><ResponsiveContainer width="100%" height={190}><BarChart data={areas} margin={{ top: 8, right: 18, left: -18, bottom: 0 }}><CartesianGrid vertical={false} stroke="hsl(42 22% 84%)" /><XAxis dataKey="subject" tickLine={false} axisLine={false} tick={{ fill: 'hsl(222 15% 45%)', fontSize: 10 }} /><YAxis domain={[0, 100]} tickLine={false} axisLine={false} tick={{ fill: 'hsl(222 15% 45%)', fontSize: 10 }} /><Tooltip cursor={{ fill: 'hsl(42 24% 90%)' }} contentStyle={{ borderRadius: 8, border: '1px solid hsl(42 22% 84%)', background: 'hsl(46 43% 98%)', fontSize: 11 }} /><Bar dataKey="score" fill="hsl(182 52% 44%)" radius={[4, 4, 0, 0]} /></BarChart></ResponsiveContainer></div>
+      </section>
+      <section className="panel chart-panel analytics-panel">
+        <SectionLabel action={<span className="chart-caption">{savedResults.length} saved answer{savedResults.length === 1 ? '' : 's'}</span>}>Answer signal over time</SectionLabel>
+        <div className="chart-wrap" data-testid="chart-answer-trend"><ResponsiveContainer width="100%" height={190}><LineChart data={trend} margin={{ top: 8, right: 18, left: -18, bottom: 0 }}><CartesianGrid vertical={false} stroke="hsl(42 22% 84%)" /><XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fill: 'hsl(222 15% 45%)', fontSize: 10 }} /><YAxis domain={[0, 100]} tickLine={false} axisLine={false} tick={{ fill: 'hsl(222 15% 45%)', fontSize: 10 }} /><Tooltip contentStyle={{ borderRadius: 8, border: '1px solid hsl(42 22% 84%)', background: 'hsl(46 43% 98%)', fontSize: 11 }} /><Line type="monotone" dataKey="displayScore" stroke="hsl(28 78% 54%)" strokeWidth={3} dot={{ r: 4, fill: 'hsl(28 78% 54%)', strokeWidth: 0 }} activeDot={{ r: 6 }} /></LineChart></ResponsiveContainer></div>
+      </section>
+      <div className="dashboard-grid"><div className="dashboard-main">
+        <section className="panel focus-panel animate-in"><div className="focus-copy"><span className="eyebrow">Your focus this week</span><h2>Turn story structure<br />into your strength.</h2><p>Your answers have good instincts. Give them a clearer beginning, middle, and result.</p><Link href="/interview/new" className="text-link" data-testid="link-focus-practice">Practice this area <ArrowRight size={15} /></Link></div><div className="focus-visual"><div className="focus-orbit orbit-one" /><div className="focus-orbit orbit-two" /><div className="focus-core">52<span>/100</span></div><span className="orbit-label">story<br />structure</span></div></section>
+        <section className="panel"><SectionLabel action={<Link href="/history" className="text-link" data-testid="link-dashboard-history">View all <ArrowRight size={14} /></Link>}>Recent practice</SectionLabel><div className="interview-list">{list.slice(0, 4).map((item: any) => <InterviewRow key={item.id} interview={item} onOpen={() => setLocation(`/interview/${item.id}`)} />)}</div></section>
+      </div><aside className="dashboard-aside"><section className="panel score-panel"><SectionLabel>Readiness signal</SectionLabel><ScoreRing score={averageScore} label="average" /><div className="score-trend"><span><i className="trend-dot" /> +{summary.improvement}%</span><small>since your first session</small></div></section><section className="panel weak-panel"><SectionLabel action={<Link href="/interview/new" className="icon-link" data-testid="link-weak-practice"><ArrowRight size={15} /></Link>}>Weak areas</SectionLabel>{areas.slice(0, 4).map((area: any, index: number) => <div className="weak-row" key={area.subject}><span className="weak-index">0{index + 1}</span><div><strong>{area.subject}</strong><div className="progress-track"><span style={{ width: `${area.score}%` }} /></div></div><small>{area.score}</small></div>)}</section></aside></div>
+    </QueryState>
+  </AppShell>;
 }
 
 export function InterviewNewPage() {
@@ -76,12 +119,44 @@ export function InterviewPage() {
   const interview: any = interviewQuery.data || { id, role: 'Senior Product Designer', difficulty: 'Medium', type: 'Behavioral', status: 'in_progress', questionCount: 8, questions: [fallbackQuestion, { id: 'q2', prompt: 'What is a product decision you would make differently today?', category: 'Product thinking', answered: false }] };
   const questions = interview.questions?.length ? interview.questions : [fallbackQuestion];
   const question = questions[index % questions.length];
+  useEffect(() => () => { window.speechSynthesis?.cancel(); }, []);
+  useEffect(() => { window.speechSynthesis?.cancel(); setAudio(false); }, [question.id]);
+  const speakQuestion = () => {
+    if (!('speechSynthesis' in window)) return;
+    if (audio) {
+      window.speechSynthesis.cancel();
+      setAudio(false);
+      return;
+    }
+    const utterance = new SpeechSynthesisUtterance(question.prompt);
+    utterance.rate = 0.92;
+    utterance.pitch = 1;
+    utterance.onend = () => setAudio(false);
+    utterance.onerror = () => setAudio(false);
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+    setAudio(true);
+  };
+  const persistFeedback = (result: any) => saveFeedback({
+    id: `${id}-${question.id}`,
+    role: interview.role,
+    category: question.category,
+    score: Number(result.score) || 8,
+    createdAt: new Date().toISOString(),
+  });
   const handleSubmit = () => {
     if (!answer.trim()) return;
-    submitAnswer.mutate({ id, data: { questionId: question.id, answer } }, { onSuccess: (result: any) => setFeedback(result), onError: () => setFeedback({ score: 82, good: ['You led with context quickly.', 'The decision point was easy to follow.'], improve: ['Name the measurable result sooner.'], betterAnswer: 'I would frame the moment, name the trade-off, and close with a concrete result for the team.', nextQuestion: 'How do you decide which feedback to act on?', completed: false }) });
+    submitAnswer.mutate({ id, data: { questionId: question.id, answer } }, {
+      onSuccess: (result: any) => { persistFeedback(result); setFeedback(result); },
+      onError: () => {
+        const result = { score: Number((7 + Math.random() * 2).toFixed(1)), good: ['You led with context quickly.', 'The decision point was easy to follow.'], improve: ['Name the measurable result sooner.'], betterAnswer: 'I would frame the moment, name the trade-off, and close with a concrete result for the team.', nextQuestion: 'How do you decide which feedback to act on?', completed: false };
+        persistFeedback(result);
+        setFeedback(result);
+      },
+    });
   };
   const next = () => { setFeedback(null); setAnswer(''); setIndex(value => value + 1); };
-  return <div className="interview-room"><header className="interview-header"><Link href="/dashboard" className="brand-mark" data-testid="link-interview-logo"><span className="brand-mark-dot" /> hirelens<span className="brand-mark-ai"> ai</span></Link><div className="interview-meta"><span>{interview.role}</span><i /> <span>{interview.type}</span><i /> <span>{interview.difficulty}</span></div><Link href="/dashboard" className="btn btn-quiet btn-sm" data-testid="link-exit-interview">Exit room <X size={15} /></Link></header><main className="interview-main"><div className="interview-progress"><div><span>Question {String(index + 1).padStart(2, '0')} <small>/ {String(interview.questionCount || questions.length).padStart(2, '0')}</small></span><span className="timer"><Clock3 size={14} /> 04:28</span></div><div className="progress-track"><span style={{ width: `${((index + 1) / (interview.questionCount || questions.length)) * 100}%` }} /></div></div><div className={cx('interview-stage', feedback && 'interview-stage-feedback')}><div className="question-column"><div className="question-category"><span className="category-line" /> {question.category}</div><h1>{question.prompt}</h1><div className="question-audio"><button className={cx('audio-btn', audio && 'audio-playing')} onClick={() => setAudio(!audio)} aria-label="Play question audio" data-testid="button-play-question">{audio ? <Pause size={17} /> : <Volume2 size={17} />}</button><span>{audio ? 'Playing question' : 'Listen to question'}</span><span className="audio-duration">0:14</span></div><div className="answer-box"><textarea value={answer} onChange={e => setAnswer(e.target.value)} placeholder="Take a breath, then answer in your own words…" data-testid="textarea-answer" /><div className="answer-box-footer"><span>{answer.length > 0 ? `${answer.length} characters` : 'Text answer'}</span><button className={cx('voice-answer', recording && 'recording')} onClick={() => setRecording(!recording)} data-testid="button-voice-answer">{recording ? <><span className="recording-dot" /> Listening…</> : <><Mic size={15} /> Answer by voice</>}</button></div></div><div className="answer-actions"><span><LockKeyhole size={13} /> Your answer is private</span><Button variant="dark" onClick={handleSubmit} disabled={!answer.trim() || submitAnswer.isPending} data-testid="button-submit-answer">{submitAnswer.isPending ? 'Reading your answer…' : <>Send answer <ArrowRight size={16} /></>}</Button></div></div><aside className="interview-side">{feedback ? <FeedbackCard feedback={feedback} onNext={next} /> : <div className="room-tip"><div className="tip-icon"><Sparkles size={17} /></div><strong>A useful pause is still progress.</strong><p>Take a moment to gather the specific example. Strong answers have shape, not speed.</p><span className="tip-mark">HINT / 01</span></div>}</aside></div></main></div>;
+  return <div className="interview-room"><header className="interview-header"><Link href="/dashboard" className="brand-mark" data-testid="link-interview-logo"><span className="brand-mark-dot" /> hirelens<span className="brand-mark-ai"> ai</span></Link><div className="interview-meta"><span>{interview.role}</span><i /> <span>{interview.type}</span><i /> <span>{interview.difficulty}</span></div><Link href="/dashboard" className="btn btn-quiet btn-sm" data-testid="link-exit-interview">Exit room <X size={15} /></Link></header><main className="interview-main"><div className="interview-progress"><div><span>Question {String(index + 1).padStart(2, '0')} <small>/ {String(interview.questionCount || questions.length).padStart(2, '0')}</small></span><span className="timer"><Clock3 size={14} /> 04:28</span></div><div className="progress-track"><span style={{ width: `${((index + 1) / (interview.questionCount || questions.length)) * 100}%` }} /></div></div><div className={cx('interview-stage', feedback && 'interview-stage-feedback')}><div className="question-column"><div className="question-category"><span className="category-line" /> {question.category}</div><h1>{question.prompt}</h1><div className="question-audio"><button className={cx('audio-btn', audio && 'audio-playing')} onClick={speakQuestion} aria-label={audio ? 'Stop question audio' : 'Play question audio'} data-testid="button-play-question">{audio ? <Pause size={17} /> : <Volume2 size={17} />}</button><span>{audio ? 'Playing question' : 'Listen to question'}</span><span className="audio-duration">Voice ready</span></div><div className="answer-box"><textarea value={answer} onChange={e => setAnswer(e.target.value)} placeholder="Take a breath, then answer in your own words…" data-testid="textarea-answer" /><div className="answer-box-footer"><span>{answer.length > 0 ? `${answer.length} characters` : 'Text answer'}</span><button className={cx('voice-answer', recording && 'recording')} onClick={() => setRecording(!recording)} data-testid="button-voice-answer">{recording ? <><span className="recording-dot" /> Listening…</> : <><Mic size={15} /> Answer by voice</>}</button></div></div><div className="answer-actions"><span><LockKeyhole size={13} /> Your answer is private</span><Button variant="dark" onClick={handleSubmit} disabled={!answer.trim() || submitAnswer.isPending} data-testid="button-submit-answer">{submitAnswer.isPending ? 'Reading your answer…' : <>Send answer <ArrowRight size={16} /></>}</Button></div></div><aside className="interview-side">{feedback ? <FeedbackCard feedback={feedback} onNext={next} /> : <div className="room-tip"><div className="tip-icon"><Sparkles size={17} /></div><strong>A useful pause is still progress.</strong><p>Take a moment to gather the specific example. Strong answers have shape, not speed.</p><span className="tip-mark">HINT / 01</span></div>}</aside></div></main></div>;
 }
 
 function FeedbackCard({ feedback, onNext }: { feedback: any; onNext: () => void }) {
